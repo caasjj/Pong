@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <link rel="stylesheet" type="text/css" href="pong.css">
+    <script src="../HLU/Frameworks/js/jquery-2.0.2.js" type="text/javascript"></script>
+    <script>
+        $(function () {
+
+            gameObj = {
+                init: function(width,height) {
+                    gameObj.canvasWidth = width || 800;
+                    gameObj.canvasHeight = height || 600;
+                  $('canvas').attr('width', gameObj.canvasWidth).attr('height', gameObj.canvasHeight);
+                },
+                getWidth: function() {
+                    return this.canvasWidth;
+                },
+                getHeight: function() {
+                    return this.canvasHeight;
+                },
+                board: {
+                    canvas: document.getElementById('canvas'),
+                    ctx: canvas.getContext('2d')
+                }
+            };
+
+            gameObj.paddle = {
+                xPos: 0,
+                yPos: 0,
+                xDim: 50,
+                yDim: 5,
+                color: {
+                    r: 200,
+                    g: 0,
+                    b: 0,
+                    a: 1
+                },
+                draw: function (c) {
+                    c.fillStyle = "rgba(" +
+                            255 + "," +
+                            255 + "," +
+                            255 + "," +
+                            1 + ")";
+                    c.fillRect(0, 0, this.xPos, this.yDim+2);
+                    c.fillStyle = "rgba(" +
+                            this.color.r + "," +
+                            this.color.g + "," +
+                            this.color.b + "," +
+                            this.color.a + ")";
+                    c.fillRect(this.xPos, this.yPos, this.xDim, this.yDim);
+                    c.fillStyle = "rgba(" +
+                            255 + "," +
+                            255 + "," +
+                            255 + "," +
+                            1 + ")";
+                    c.fillRect(this.xPos + this.xDim, 0, this.xMax, this.yDim+2);
+                },
+                move: function (x) {
+                    this.xPos += x;
+                    this.draw(gameObj.board.ctx);
+                },
+                setColor: function (r, g, b, a) {
+                    this.color.r = r;
+                    this.color.g = g;
+                    this.color.b = b;
+                    this.color.a = a;
+                }
+            };
+
+            gameObj.ball = { };
+
+            gameObj.wall = {
+                color: {
+                    r: 0,
+                    g: 0,
+                    b: 0,
+                    a: 1
+                },
+                pos: 'top',
+                yDim: 5,
+                yMax: 600,
+                xMax: 800,
+                hole: {
+                    left: 120,
+                    right: 170
+                },
+                setColor: function (r, g, b, a) {
+                    this.color.r = r;
+                    this.color.g = g;
+                    this.color.b = b;
+                    this.color.a = a;
+                },
+                draw: function (c) {
+                    this.drawLeftWall(c);
+                    this.drawHole(c);
+                    this.drawRightWall(c);
+                },
+                drawLeftWall: function (c) {
+                    c.fillStyle = "rgba(" +
+                            this.color.r + "," +
+                            this.color.g + "," +
+                            this.color.b + "," +
+                            this.color.a + ")";
+
+                    c.fillRect(0, this.yMax - this.yDim, this.hole.left, this.yDim);
+                },
+                drawHole: function (c) {
+                    c.fillStyle = "rgba(" +
+                            255 + "," +
+                            255 + "," +
+                            255 + "," +
+                            1 + ")";
+                    c.fillRect(this.hole.left, this.yMax - this.yDim, this.hole.right - this.hole.left, this.yDim);
+                },
+                drawRightWall: function (c) {
+                    c.fillStyle = "rgba(" +
+                            this.color.r + "," +
+                            this.color.g + "," +
+                            this.color.b + "," +
+                            this.color.a + ")";
+                    c.fillRect(this.hole.right, this.yMax - this.yDim, this.xMax - this.hole.right, this.yDim);
+                },
+                moveHole: function(x) {
+                    this.hole.left += x;
+                    this.hole.right += x;
+                    this.draw(gameObj.board.ctx);
+                }
+
+            };
+
+            // Attach keyboard event handler
+            $(document).keydown(function (e) {
+                if (e.keyCode === 37) {
+                    gameObj.paddle.move(-10)
+                }
+                if (e.keyCode === 39) {
+                    gameObj.paddle.move(10);
+                }
+            });
+
+            // Draw the paddle
+            gameObj.init();
+            gameObj.paddle.draw(gameObj.board.ctx);
+            gameObj.wall.draw(gameObj.board.ctx);
+
+
+        })
+        ;
+    </script>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+</body>
+</html>
