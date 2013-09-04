@@ -1,0 +1,7 @@
+A very simple pong game to demonstrate basic use of the canvas, simple (trivial?!) collision detection, use of timers as event driver, etc.
+
+Use <spacebar> to start the game.  The ball will start in a random direction at a velocity randomized around a reasonable mean.
+
+Use left/right arrow key to move the red paddle, and up/down key to speed up / slow down the paddle movement.
+
+Objective is to sink the ball in the opening at the opposite wall.
