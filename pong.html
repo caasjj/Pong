@@ -8,11 +8,15 @@
 $(function () {
 
     gameObj = {
-        tInterval: 10,
         init: function (width, height) {
-            gameObj.canvasWidth = width || 800;
-            gameObj.canvasHeight = height || 600;
-            $('canvas').attr('width', gameObj.canvasWidth).attr('height', gameObj.canvasHeight);
+            this.canvasWidth = width || 800;
+            this.canvasHeight = height || 600;
+            this.tInterval = 10;
+            this.running = false;
+            $('canvas').attr('width', this.canvasWidth).attr('height', this.canvasHeight);
+            gameObj.wall.init();
+            gameObj.paddle.init();
+            gameObj.ball.init();
         },
         board: {
             getWidth: function () {
@@ -25,25 +29,65 @@ $(function () {
                 var canvas = document.getElementById('canvas');
                 return canvas.getContext('2d');
             }
-        }
+        },
+        score: {
+            player: 0,
+            computer: 0
+        },
+        PlayerScored: function () {
+            this.score.player += 1;
+            $('#player-score').val(this.score.player);
+            clearInterval(gameObj.timer);
+            alert('Player Wins!');
+            gameObj.reset();
+        },
+        ComputerScored: function () {
+            this.score.computer += 1;
+            $('#computer-score').val(this.score.computer);
+            clearInterval(gameObj.timer);
+            alert('Computer Wins!');
 
+            gameObj.reset();
+        },
+        reset: function () {
+            gameObj.init(800, 600);
+            gameObj.paddle.draw(gameObj.board);
+            gameObj.wall.draw(gameObj.board);
+            gameObj.ball.draw(gameObj.board);
+
+        },
+        run: function () {
+            if (this.running) {
+                 clearInterval(gameObj.timer);
+                this.running = false;
+            } else {
+                gameObj.timer = setInterval(function () {
+                    gameObj.ball.run.call(gameObj.ball);
+                    gameObj.paddle.run.call(gameObj.paddle);
+                }, gameObj.tInterval);
+                this.running = true;
+            }
+        }
     };
 
     gameObj.paddle = {
-        xPos: 375,
-        yPos: 0,
-        xDim: 100,
-        yDim: 5,
-        color: {
-            r: 200,
-            g: 0,
-            b: 0,
-            a: 1
+        init: function () {
+            this.xPos = 375;
+            this.yPos = 0;
+            this.xDim = 100;
+            this.yDim = 10;
+            this.color = {
+                r: 200,
+                g: 0,
+                b: 0,
+                a: 1
+            };
+            this.velocity = 0;
+            this.initVelocity = 0.5;
         },
-        velocity: 0,
         clear: function (b) {
             var c = b.getCtx();
-            c.clearRect(this.xPos, this.yPos, this.xDim, this.yDim);
+            c.clearRect(this.xPos-2, this.yPos, this.xDim+4, this.yDim);
         },
         draw: function (b) {
             var c = b.getCtx();
@@ -77,18 +121,19 @@ $(function () {
     };
 
     gameObj.ball = {
-        xPos: 400,
-        yPos: 15,
-        radius: 10,
-        velocity: {
-            xVel: -5,
-            yVel: 5
-        },
-        color: {
-            r: 0,
-            g: 125,
-            b: 0,
-            a: 1
+        init: function () {
+            this.xPos = 400;
+            this.yPos = 400;
+            this.radius = 10;
+            this.velocity = {};
+            this.velocity.xVel = (Math.random() > 0.5 ? 1 : -1 ) * (Math.random() * 0.15 + 0.25);
+            this.velocity.yVel = (Math.random() > 0.5 ? 1 : -1 ) * (Math.random() * 0.15 + 0.25);
+            this.color = {
+                r: 0,
+                g: 125,
+                b: 0,
+                a: 1
+            };
         },
         run: function () {
             this.move(this.velocity.xVel * gameObj.tInterval, this.velocity.yVel * gameObj.tInterval);
@@ -106,16 +151,21 @@ $(function () {
                     this.velocity.xVel = -Math.abs(this.velocity.xVel);
                 }
             }
-            if( (this.yPos < gameObj.board.getHeight() - gameObj.wall.getWidth() - this.radius) &&
-                    (!this.detectPaddleHit() ) ) {
-                this.yPos += y;
-            } else {
-                if (gameObj.wall.isInHole(this.xPos, this.radius)) {
+            if ((this.yPos < gameObj.board.getHeight() - gameObj.wall.getWidth() - this.radius) &&
+                    (!this.detectPaddleHit() )) {
+                if (this.yPos <= 0) {
+                    gameObj.ComputerScored();
+                } else {
                     this.yPos += y;
+                }
+            } else {
+                if (gameObj.wall.isInHole(this.xPos, this.radius) && (this.yPos >= gameObj.board.getHeight() - gameObj.wall.getWidth() - this.radius)) {
+                    gameObj.PlayerScored();
                 } else {
                     if (this.yPos >= gameObj.board.getHeight() - gameObj.wall.getWidth() - this.radius) {
                         this.yPos -= y;
                         this.velocity.yVel = -Math.abs(this.velocity.yVel);
+                        gameObj.wall.draw(gameObj.board);
                     } else {
                         this.yPos -= y;
                         this.velocity.yVel = Math.abs(this.velocity.yVel);
@@ -125,25 +175,26 @@ $(function () {
             }
             this.draw(gameObj.board);
         },
-        detectPaddleHit : function() {
-                if (this.yPos > gameObj.paddle.yDim + this.radius) {
-                    return false;
+        detectPaddleHit: function () {
+            if (this.yPos > gameObj.paddle.yDim + this.radius) {
+                return false;
+            } else {
+                if ((this.xPos <= gameObj.paddle.xPos + gameObj.paddle.xDim) &&
+                        (this.xPos >= gameObj.paddle.xPos)
+                        ) {
+                    return true;
                 } else {
-                    if ( (this.xPos<=gameObj.paddle.xPos + gameObj.paddle.xDim) &&
-                         (this.xPos>=gameObj.paddle.xPos)
-                     ) {
-                        return true;
-                    } else {
-                        return false;
-                    }
+                    return false;
                 }
+            }
         },
 
         clear: function (b) {
             var c = b.getCtx();
-            c.clearRect(this.xPos - this.radius, this.yPos - this.radius, this.radius * 2, this.radius * 2);
+            var v = [this.xPos - this.radius - 1, this.yPos - this.radius - 1, this.radius * 2 + 2, this.radius * 2 + 2];
+            c.clearRect(v[0], v[1], v[2], v[3]);
             c.fillStyle = 'white';
-            c.fillRect(this.xPos - this.radius, this.yPos - this.radius, this.radius * 2, this.radius * 2);
+            c.fillRect(v[0], v[1], v[2], v[3]);
         },
         draw: function (b) {
             var c = b.getCtx();
@@ -159,18 +210,18 @@ $(function () {
     };
 
     gameObj.wall = {
-        color: {
-            r: 0,
-            g: 0,
-            b: 0,
-            a: 1
-        },
-        pos: 'top',
-        yDim: 5,
-        hole: {
-            left: 350,
-            right: 450,
-            score:[]
+        init: function () {
+            this.color = {
+                r: 0,
+                g: 0,
+                b: 0,
+                a: 1
+            };
+            this.yDim = 5;
+            this.hole = {
+                left: 350,
+                right: 450
+            };
         },
         setColor: function (r, g, b, a) {
             this.color.r = r;
@@ -221,20 +272,22 @@ $(function () {
 
     // Attach keyboard event handler
     $(document).keydown(function (e) {
-        if (e.keyCode === 37) {
-            gameObj.paddle.velocity = -0.50;
-        }
-        if (e.keyCode === 39) {
-            gameObj.paddle.velocity = 0.50;
-        }
         if (e.keyCode === 38) {
-            gameObj.ball.move(-5, 5);
+            gameObj.paddle.initVelocity *= 1.05;
         }
         if (e.keyCode === 40) {
-            gameObj.ball.move(5, 5);
+            gameObj.paddle.initVelocity /= 1.05;
         }
-        if (e.keyCode === 13) {
-            gameObj.ball.move(0, 0);
+        if (e.keyCode === 37) {
+            //gameObj.ball.move(-5, 5);
+            gameObj.paddle.velocity = -gameObj.paddle.initVelocity;
+        }
+        if (e.keyCode === 39) {
+            //gameObj.ball.move(5, 5);
+            gameObj.paddle.velocity = gameObj.paddle.initVelocity;
+        }
+        if (e.keyCode == 32) {
+            gameObj.run();
         }
     });
 
@@ -243,20 +296,28 @@ $(function () {
     });
 
     // Draw the paddle
-    gameObj.init(800, 600);
-    gameObj.paddle.draw(gameObj.board);
-    gameObj.wall.draw(gameObj.board);
-    gameObj.ball.draw(gameObj.board);
-    setInterval(function () {
-        gameObj.ball.run.call(gameObj.ball);
-        gameObj.paddle.run.call(gameObj.paddle);
-    }, gameObj.tInterval);
+//    gameObj.init(800, 600);
+//    gameObj.paddle.draw(gameObj.board);
+//    gameObj.wall.draw(gameObj.board);
+//    gameObj.ball.draw(gameObj.board);
+//    gameObj.timer = setInterval(function () {
+//        gameObj.ball.run.call(gameObj.ball);
+//        gameObj.paddle.run.call(gameObj.paddle);
+//    }, gameObj.tInterval);
 
-})
-;
+    gameObj.reset();
+    //gameObj.run();
+
+});
 </script>
 </head>
 <body>
 <canvas id="canvas"></canvas>
+<h1>Game Score</h1>
+
+<div>
+    Player : <input id="player-score" placeholder="0" disabled>
+    Computer : <input id="computer-score" placeholder="0" disabled>
+</div>
 </body>
 </html>
