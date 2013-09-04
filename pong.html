@@ -3,7 +3,8 @@
 <head>
 <title></title>
 <link rel="stylesheet" type="text/css" href="pong.css">
-<script src="../HLU/Frameworks/js/jquery-2.0.2.js" type="text/javascript"></script>
+
+<script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js" type="text/javascript"></script>
 <script>
 $(function () {
 
@@ -36,17 +37,16 @@ $(function () {
         },
         PlayerScored: function () {
             this.score.player += 1;
-            $('#player-score').val(this.score.player);
             clearInterval(gameObj.timer);
             alert('Player Wins!');
+            $('#player-score').val(this.score.player);
             gameObj.reset();
         },
         ComputerScored: function () {
             this.score.computer += 1;
-            $('#computer-score').val(this.score.computer);
             clearInterval(gameObj.timer);
             alert('Computer Wins!');
-
+            $('#computer-score').val(this.score.computer);
             gameObj.reset();
         },
         reset: function () {
